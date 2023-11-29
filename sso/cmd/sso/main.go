@@ -1,10 +1,13 @@
 package main
 
 import (
-	"grpc_auth_tutorial/sso/internal/app"
-	"grpc_auth_tutorial/sso/internal/config"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
+
+	"grpc_auth_tutorial/sso/internal/app"
+	"grpc_auth_tutorial/sso/internal/config"
 )
 
 const (
@@ -22,7 +25,18 @@ func main() {
 
 	application := app.New(log, cfg.GRPC.Port, cfg.StoragePath, cfg.TokenTTL)
 
-	application.GRPCSrv.MustRun()
+	go application.GRPCSrv.MustRun()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+
+	sig := <-stop
+
+	log.Info("stopping application", slog.String("signal", sig.String()))
+
+	application.GRPCSrv.Stop()
+
+	log.Info("application stop")
 }
 
 func setupLogger(env string) *slog.Logger {
