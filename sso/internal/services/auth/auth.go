@@ -16,6 +16,8 @@ import (
 
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrInvalidAppID       = errors.New("invalid app id")
+	ErrUserExist          = errors.New("user already exist")
 )
 
 type Auth struct {
@@ -32,14 +34,18 @@ type UserSaver interface {
 
 type UserProvider interface {
 	User(ctx context.Context, email string) (models.User, error)
-	isAdmin(ctx context.Context, userID int64) (bool, error)
+	IsAdminStorage(ctx context.Context, userID int64) (bool, error)
 }
 
 type AppProvider interface {
 	App(ctx context.Context, appID int) (models.App, error)
 }
 
-func New(log *slog.Logger, userSaver UserSaver, userProvider UserProvider, appProvider AppProvider, tokenTTL time.Duration) *Auth {
+func New(log *slog.Logger,
+	userSaver UserSaver,
+	userProvider UserProvider,
+	appProvider AppProvider,
+	tokenTTL time.Duration) *Auth {
 	return &Auth{
 		log:         log,
 		usrSaver:    userSaver,
@@ -113,6 +119,12 @@ func (a *Auth) RegisterNewUser(ctx context.Context, email, pass string) (int64, 
 
 	id, err := a.usrSaver.SaveUser(ctx, email, passHash)
 	if err != nil {
+		if errors.Is(err, storage.ErrUserExists) {
+			log.Warn("user already exist", slog.Any("error", err.Error()))
+
+			return 0, fmt.Errorf("%s: %w", op, ErrUserExist)
+		}
+
 		log.Error("failed to save user", slog.Any("error", err.Error()))
 
 		return 0, fmt.Errorf("%s: %w", op, err)
@@ -123,7 +135,7 @@ func (a *Auth) RegisterNewUser(ctx context.Context, email, pass string) (int64, 
 	return id, nil
 }
 
-func (a *Auth) isAdmin(ctx context.Context, userID int64) (bool, error) {
+func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 	const op = "auth.IsAdmin"
 
 	log := a.log.With(
@@ -133,8 +145,14 @@ func (a *Auth) isAdmin(ctx context.Context, userID int64) (bool, error) {
 
 	log.Info("check if user is admin")
 
-	isAdmin, err := a.usrProvider.isAdmin(ctx, userID)
+	isAdmin, err := a.usrProvider.IsAdminStorage(ctx, userID)
 	if err != nil {
+		if errors.Is(err, storage.ErrAppNotFound) {
+			log.Warn("user not found", slog.Any("error", err.Error()))
+
+			return false, fmt.Errorf("%s: %w", op, ErrInvalidAppID)
+		}
+
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 

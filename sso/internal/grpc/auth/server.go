@@ -2,6 +2,9 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"grpc_auth_tutorial/sso/internal/services/auth"
+	"grpc_auth_tutorial/sso/internal/storage"
 
 	ssov1 "grpc_auth_tutorial/protoss/gen/go/sso"
 
@@ -15,7 +18,7 @@ const emptyValue = 0
 type Auth interface {
 	Login(ctx context.Context, email, password string, appID int) (token string, err error)
 	RegisterNewUser(ctx context.Context, email, password string) (userID int64, err error)
-	isAdmin(ctx context.Context, userID int64) (bool, error)
+	IsAdmin(ctx context.Context, userID int64) (bool, error)
 }
 
 type serverAPI struct {
@@ -72,6 +75,10 @@ func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*
 
 	userID, err := s.auth.RegisterNewUser(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
+		if errors.Is(err, storage.ErrUserExists) {
+			return nil, status.Error(codes.AlreadyExists, "user already exist")
+		}
+
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
@@ -87,6 +94,10 @@ func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.
 
 	token, err := s.auth.Login(ctx, req.GetEmail(), req.GetPassword(), int(req.AppId))
 	if err != nil {
+		if errors.Is(err, auth.ErrInvalidCredentials) {
+			return nil, status.Error(codes.InvalidArgument, "invalid credentials")
+		}
+
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
@@ -100,8 +111,11 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ss
 		return nil, err
 	}
 
-	isAdmin, err := s.auth.isAdmin(ctx, req.GetUserId())
+	isAdmin, err := s.auth.IsAdmin(ctx, req.GetUserId())
 	if err != nil {
+		if errors.Is(err, storage.ErrUserNotFound) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
