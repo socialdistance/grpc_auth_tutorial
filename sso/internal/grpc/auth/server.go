@@ -3,10 +3,8 @@ package auth
 import (
 	"context"
 	"errors"
-	"grpc_auth_tutorial/sso/internal/services/auth"
-	"grpc_auth_tutorial/sso/internal/storage"
-
 	ssov1 "grpc_auth_tutorial/protoss/gen/go/sso"
+	"grpc_auth_tutorial/sso/internal/services/auth"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -75,7 +73,7 @@ func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*
 
 	userID, err := s.auth.RegisterNewUser(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
-		if errors.Is(err, storage.ErrUserExists) {
+		if errors.Is(err, auth.ErrUserExist) {
 			return nil, status.Error(codes.AlreadyExists, "user already exist")
 		}
 
@@ -113,7 +111,7 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ss
 
 	isAdmin, err := s.auth.IsAdmin(ctx, req.GetUserId())
 	if err != nil {
-		if errors.Is(err, storage.ErrUserNotFound) {
+		if errors.Is(err, auth.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 		return nil, status.Error(codes.Internal, "internal error")
