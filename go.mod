@@ -1,6 +1,6 @@
 module grpc_auth_tutorial
 
-go 1.21.4
+go 1.21
 
 require (
 	github.com/brianvoe/gofakeit/v6 v6.25.0

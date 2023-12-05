@@ -97,7 +97,6 @@ func (a *Auth) Login(ctx context.Context, email, password string, appID int) (st
 
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
-
 	return token, nil
 }
 

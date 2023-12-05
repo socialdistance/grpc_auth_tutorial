@@ -31,11 +31,11 @@ func Register(gRPC *grpc.Server, auth Auth) {
 }
 
 func validateLogin(req *ssov1.LoginRequest) error {
-	if req.GetEmail() != "" {
+	if req.GetEmail() == "" {
 		return status.Error(codes.InvalidArgument, "email is required")
 	}
 
-	if req.GetPassword() != "" {
+	if req.GetPassword() == "" {
 		return status.Error(codes.InvalidArgument, "password is required")
 	}
 
@@ -47,11 +47,11 @@ func validateLogin(req *ssov1.LoginRequest) error {
 }
 
 func validateRegister(req *ssov1.RegisterRequest) error {
-	if req.GetEmail() != "" {
+	if req.GetEmail() == "" {
 		return status.Error(codes.InvalidArgument, "email is required")
 	}
 
-	if req.GetPassword() != "" {
+	if req.GetPassword() == "" {
 		return status.Error(codes.InvalidArgument, "password is required")
 	}
 
