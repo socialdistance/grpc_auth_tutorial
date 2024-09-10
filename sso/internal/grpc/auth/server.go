@@ -2,8 +2,9 @@ package auth
 
 import (
 	"context"
-
+	"errors"
 	ssov1 "grpc_auth_tutorial/protoss/gen/go/sso"
+	"grpc_auth_tutorial/sso/internal/services/auth"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -30,11 +31,11 @@ func Register(gRPC *grpc.Server, auth Auth) {
 }
 
 func validateLogin(req *ssov1.LoginRequest) error {
-	if req.GetEmail() != "" {
+	if req.GetEmail() == "" {
 		return status.Error(codes.InvalidArgument, "email is required")
 	}
 
-	if req.GetPassword() != "" {
+	if req.GetPassword() == "" {
 		return status.Error(codes.InvalidArgument, "password is required")
 	}
 
@@ -46,11 +47,11 @@ func validateLogin(req *ssov1.LoginRequest) error {
 }
 
 func validateRegister(req *ssov1.RegisterRequest) error {
-	if req.GetEmail() != "" {
+	if req.GetEmail() == "" {
 		return status.Error(codes.InvalidArgument, "email is required")
 	}
 
-	if req.GetPassword() != "" {
+	if req.GetPassword() == "" {
 		return status.Error(codes.InvalidArgument, "password is required")
 	}
 
@@ -72,6 +73,10 @@ func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*
 
 	userID, err := s.auth.RegisterNewUser(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
+		if errors.Is(err, auth.ErrUserExist) {
+			return nil, status.Error(codes.AlreadyExists, "user already exist")
+		}
+
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
@@ -87,6 +92,10 @@ func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.
 
 	token, err := s.auth.Login(ctx, req.GetEmail(), req.GetPassword(), int(req.AppId))
 	if err != nil {
+		if errors.Is(err, auth.ErrInvalidCredentials) {
+			return nil, status.Error(codes.InvalidArgument, "invalid credentials")
+		}
+
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 
@@ -102,6 +111,9 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ss
 
 	isAdmin, err := s.auth.IsAdmin(ctx, req.GetUserId())
 	if err != nil {
+		if errors.Is(err, auth.ErrUserNotFound) {
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
 		return nil, status.Error(codes.Internal, "internal error")
 	}
 

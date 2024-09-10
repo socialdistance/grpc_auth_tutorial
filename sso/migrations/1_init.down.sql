@@ -1,2 +1,6 @@
+<<<<<<< HEAD
 DROP TABLE IF EXISTS users;
+=======
+DROP TABLE IF EXISTS users;
+>>>>>>> e06d5951a675498017bd10b798b3973edc511eba
 DROP TABLE IF EXISTS apps;

@@ -1,6 +1,8 @@
 package app
 
 import (
+	"grpc_auth_tutorial/sso/internal/services/auth"
+	"grpc_auth_tutorial/sso/internal/storage/sqlite"
 	"log/slog"
 	"time"
 
