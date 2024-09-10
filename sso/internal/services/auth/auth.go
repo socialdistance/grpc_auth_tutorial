@@ -26,13 +26,18 @@ type Auth struct {
 	tokenTTL    time.Duration
 }
 
+// isAdmin implements auth.Auth.
+// func (a *Auth) isAdmin(ctx context.Context, userID int64) (bool, error) {
+// 	panic("unimplemented")
+// }
+
 type UserSaver interface {
 	SaveUser(ctx context.Context, email string, passHash []byte) (uid int64, err error)
 }
 
 type UserProvider interface {
 	User(ctx context.Context, email string) (models.User, error)
-	isAdmin(ctx context.Context, userID int64) (bool, error)
+	IsAdmin(ctx context.Context, userID int64) (bool, error)
 }
 
 type AppProvider interface {
@@ -71,7 +76,7 @@ func (a *Auth) Login(ctx context.Context, email, password string, appID int) (st
 		return "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	if err := bcrypt.CompareHashAndPassword(user.HashPass, []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
 		a.log.Info("invalid credentials", slog.Any("error", err.Error()))
 
 		return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
@@ -123,7 +128,7 @@ func (a *Auth) RegisterNewUser(ctx context.Context, email, pass string) (int64, 
 	return id, nil
 }
 
-func (a *Auth) isAdmin(ctx context.Context, userID int64) (bool, error) {
+func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 	const op = "auth.IsAdmin"
 
 	log := a.log.With(
@@ -133,7 +138,7 @@ func (a *Auth) isAdmin(ctx context.Context, userID int64) (bool, error) {
 
 	log.Info("check if user is admin")
 
-	isAdmin, err := a.usrProvider.isAdmin(ctx, userID)
+	isAdmin, err := a.usrProvider.IsAdmin(ctx, userID)
 	if err != nil {
 		return false, fmt.Errorf("%s: %w", op, err)
 	}

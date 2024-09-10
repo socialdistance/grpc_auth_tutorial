@@ -5,19 +5,25 @@ import (
 	"time"
 
 	grpcapp "grpc_auth_tutorial/sso/internal/app/grpc"
+	"grpc_auth_tutorial/sso/internal/services/auth"
+	"grpc_auth_tutorial/sso/internal/storage/sqlite"
 )
 
 type App struct {
-	GRPCSrv *grpcapp.App
+	GRPCServer *grpcapp.App
 }
 
 func New(log *slog.Logger, grpcPort int, storagePath string, tokenTTL time.Duration) *App {
+	storage, err := sqlite.New(storagePath)
+	if err != nil {
+		panic(err)
+	}
 
-	//authService := auth.New(log,)
+	authService := auth.New(log, storage, storage, storage, tokenTTL)
 
-	grpcApp := grpcapp.New(log, grpcPort)
+	grpcApp := grpcapp.New(log, authService, grpcPort)
 
 	return &App{
-		GRPCSrv: grpcApp,
+		GRPCServer: grpcApp,
 	}
 }

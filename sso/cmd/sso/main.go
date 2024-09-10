@@ -21,21 +21,21 @@ func main() {
 
 	log := setupLogger(cfg.Env)
 
-	log.Info("starting application", slog.Any("cfg", cfg))
-
 	application := app.New(log, cfg.GRPC.Port, cfg.StoragePath, cfg.TokenTTL)
 
-	go application.GRPCSrv.MustRun()
+	go func() {
+		application.GRPCServer.MustRun()
+	}()
+
+	// Graceful shutdown
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
-	sig := <-stop
+	<-stop
 
-	log.Info("stopping application", slog.String("signal", sig.String()))
-
-	application.GRPCSrv.Stop()
-
+	application.GRPCServer.Stop()
+	log.Info("Gracefully stopped")
 	log.Info("application stop")
 }
 
