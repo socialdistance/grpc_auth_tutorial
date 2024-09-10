@@ -40,11 +40,7 @@ type UserSaver interface {
 
 type UserProvider interface {
 	User(ctx context.Context, email string) (models.User, error)
-<<<<<<< HEAD
-	IsAdmin(ctx context.Context, userID int64) (bool, error)
-=======
 	IsAdminStorage(ctx context.Context, userID int64) (bool, error)
->>>>>>> e06d5951a675498017bd10b798b3973edc511eba
 }
 
 type AppProvider interface {
@@ -154,11 +150,7 @@ func (a *Auth) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 
 	log.Info("check if user is admin")
 
-<<<<<<< HEAD
-	isAdmin, err := a.usrProvider.IsAdmin(ctx, userID)
-=======
 	isAdmin, err := a.usrProvider.IsAdminStorage(ctx, userID)
->>>>>>> e06d5951a675498017bd10b798b3973edc511eba
 	if err != nil {
 		if errors.Is(err, storage.ErrAppNotFound) {
 			log.Warn("user not found", slog.Any("error", err.Error()))
