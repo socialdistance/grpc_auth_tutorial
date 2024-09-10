@@ -16,6 +16,11 @@ type Storage struct {
 	db *sql.DB
 }
 
+// IsAdminStorage implements auth.UserProvider.
+func (s *Storage) IsAdminStorage(ctx context.Context, userID int64) (bool, error) {
+	panic("unimplemented")
+}
+
 func New(storagePath string) (*Storage, error) {
 	const op = "storage.sqlite.New"
 
