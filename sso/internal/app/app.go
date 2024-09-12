@@ -1,12 +1,12 @@
 package app
 
 import (
-	"grpc_auth_tutorial/sso/internal/services/auth"
-	"grpc_auth_tutorial/sso/internal/storage/sqlite"
 	"log/slog"
 	"time"
 
 	grpcapp "grpc_auth_tutorial/sso/internal/app/grpc"
+	"grpc_auth_tutorial/sso/internal/services/auth"
+	"grpc_auth_tutorial/sso/internal/storage/sqlite"
 )
 
 type App struct {
