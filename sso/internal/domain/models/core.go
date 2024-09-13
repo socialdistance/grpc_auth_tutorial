@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-type Store struct {
+// TODO
+type StoreEvent struct {
 	ID        uuid.UUID
 	Title     string
 	Started   time.Time
